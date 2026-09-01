@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ai美丽优选 - 主播直播间</title>
+  <style>
+    :root {
+      --safe-top: 54px;
+      --safe-bottom: 34px;
+      --primary: #1A73E8;
+      --primary-dark: #1557B0;
+      --orange: #FF9500;
+      --red: #FF3B30;
+      --green: #34C759;
+      --gray: #8E8E93;
+      --bg: #F4F5FA;
+      --card: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: rgba(0,0,0,0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #F2F2F7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone-frame {
+      width: 440px;
+      height: 956px;
+      background: #000;
+      border-radius: 58px;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.35), inset 0 0 0 2px #333;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      border-radius: 48px;
+      overflow: hidden;
+      position: relative;
+    }
+    .dynamic-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 36px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 1000;
+    }
+
+    /* Responsive: mobile full screen */
+    @media (max-width: 520px) {
+      html, body { background: #000; }
+      .phone-frame {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+      .screen { border-radius: 0; }
+      .dynamic-island { display: none; }
+    }
+
+    /* Status bar */
+    .status-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: var(--safe-top);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 12px 28px 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      z-index: 100;
+    }
+    .status-icons { display: flex; gap: 6px; align-items: center; }
+    .status-icons svg { width: 18px; height: 14px; }
+
+    /* Camera preview */
+    .camera-preview {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      z-index: 1;
+    }
+    .camera-preview::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 40%),
+                  radial-gradient(circle at 70% 60%, rgba(26,115,232,0.15) 0%, transparent 50%);
+    }
+    .live-badge {
+      position: absolute;
+      top: calc(var(--safe-top) + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,59,48,0.9);
+      padding: 5px 10px;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 20;
+    }
+    .live-dot { width: 7px; height: 7px; background: #fff; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .live-time {
+      position: absolute;
+      top: calc(var(--safe-top) + 40px);
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 20;
+      background: rgba(0,0,0,0.3);
+      padding: 3px 10px;
+      border-radius: 10px;
+    }
+
+    /* Host info */
+    .host-info {
+      position: absolute;
+      top: calc(var(--safe-top) + 12px);
+      left: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,0,0,0.35);
+      padding: 6px 12px 6px 6px;
+      border-radius: 22px;
+      backdrop-filter: blur(8px);
+    }
+    .host-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 12px; font-weight: 600;
+    }
+    .host-name { color: #fff; font-size: 13px; font-weight: 600; }
+    .host-views { color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 1px; }
+
+    /* Top actions */
+    .top-actions {
+      position: absolute;
+      top: calc(var(--safe-top) + 12px);
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+    }
+    .icon-btn svg { width: 20px; height: 20px; }
+
+    /* Data panel (center-top floating) */
+    .data-panel {
+      position: absolute;
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%) scale(0.96);
+      width: 86%;
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 18px;
+      padding: 14px 16px 16px;
+      z-index: 510;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .data-panel.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) scale(1);
+    }
+    .data-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .data-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .data-actions { display: flex; gap: 14px; align-items: center; }
+    .data-action {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .data-action svg { width: 14px; height: 14px; }
+    .data-action.refresh { color: var(--primary); }
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+    }
+    .data-item { display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 12px; color: var(--text-secondary); }
+    .data-value { font-size: 17px; font-weight: 700; color: var(--text); }
+
+    /* Bottom toolbar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 0 12px calc(var(--safe-bottom) + 8px);
+      z-index: 40;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .bottom-bar.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+    }
+    .tool-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: #fff;
+      cursor: pointer;
+      background: none;
+      border: none;
+      min-width: 56px;
+    }
+    .tool-icon {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .tool-icon svg { width: 22px; height: 22px; }
+    .tool-label { font-size: 11px; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+    .tool-btn.active .tool-icon { background: var(--primary); }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+    /* Activity popup */
+    .activity-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      z-index: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .activity-overlay.show { opacity: 1; pointer-events: auto; }
+    .activity-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60%;
+      background: #F2F2F7;
+      border-radius: 24px 24px 0 0;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 610;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .activity-sheet.show { transform: translateY(0); }
+    .activity-header {
+      padding: 14px 16px 10px;
+      background: #fff;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .activity-tabs { display: flex; gap: 8px; }
+    .activity-tab {
+      padding: 7px 18px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      background: #F2F2F7;
+      border: none;
+      cursor: pointer;
+    }
+    .activity-tab.active { background: var(--primary); color: #fff; }
+    .activity-close {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #F2F2F7;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .activity-close svg { width: 16px; height: 16px; }
+    .activity-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .activity-body::-webkit-scrollbar { display: none; }
+
+    /* Sub tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .sub-tabs::-webkit-scrollbar { display: none; }
+    .sub-tab {
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #fff;
+      border: 0.5px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .sub-tab.active { background: rgba(26,115,232,0.1); color: var(--primary); border-color: rgba(26,115,232,0.2); }
+
+    /* Product list */
+    .product-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .product-main { display: flex; gap: 10px; }
+    .product-rank {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .product-img {
+      width: 72px; height: 72px;
+      border-radius: 10px;
+      background: #F2F2F7;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary);
+      font-size: 11px;
+      overflow: hidden;
+    }
+    .product-info { flex: 1; min-width: 0; }
+    .product-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #FFF3E0;
+      color: var(--orange);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .product-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .product-price-row { display: flex; align-items: baseline; gap: 6px; margin-top: 5px; }
+    .product-price { font-size: 18px; font-weight: 700; color: var(--red); }
+    .product-origin { font-size: 12px; color: var(--text-secondary); text-decoration: line-through; }
+    .product-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-config {
+      padding: 5px 12px;
+      border-radius: 14px;
+      border: 0.5px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .btn-push {
+      padding: 6px 16px;
+      border-radius: 16px;
+      border: none;
+      background: var(--red);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-push.active { background: var(--orange); }
+    .product-sort {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 0.5px solid var(--border);
+    }
+    .sort-btn {
+      flex: 1;
+      padding: 6px 0;
+      border-radius: 10px;
+      border: none;
+      background: #F2F2F7;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    /* Lucky bag list */
+    .bag-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .bag-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .bag-left { display: flex; gap: 10px; }
+    .bag-img {
+      width: 52px; height: 52px;
+      border-radius: 10px;
+      background: #F2F2F7;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .bag-info { min-width: 0; }
+    .bag-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .bag-tags { display: flex; gap: 5px; margin-top: 4px; }
+    .bag-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+    .bag-tag.type { background: #E8F0FE; color: var(--primary); }
+    .bag-tag.status { background: #FFF3E0; color: var(--orange); }
+    .bag-status { font-size: 12px; color: var(--red); font-weight: 500; }
+    .bag-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .bag-comment {
+      background: #F2F2F7;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bag-comment span.edit { color: var(--primary); cursor: pointer; }
+    .bag-actions { display: flex; gap: 8px; }
+    .bag-btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .bag-btn.orange { background: var(--orange); }
+
+    /* Coupon list */
+    .coupon-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .coupon-img {
+      width: 60px; height: 60px;
+      border-radius: 10px;
+      background: #F2F2F7;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .coupon-info { flex: 1; min-width: 0; }
+    .coupon-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .coupon-condition { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .coupon-status { font-size: 12px; color: var(--orange); font-weight: 500; margin-bottom: 6px; }
+    .coupon-push {
+      padding: 7px 14px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .coupon-push.active { background: var(--orange); }
+    .coupon-pushing {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--orange);
+      margin-bottom: 4px;
+    }
+    .coupon-pushing .spin {
+      width: 10px; height: 10px;
+      border: 2px solid var(--orange);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Comment edit modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      width: 80%;
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px;
+      transform: scale(0.92);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.show .modal-box { transform: scale(1); }
+    .modal-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .modal-input {
+      width: 100%;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+      min-height: 70px;
+      font-family: inherit;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .modal-cancel { background: #F2F2F7; color: var(--text); }
+    .modal-ok { background: var(--primary); color: #fff; }
+
+    /* Profile page */
+    .profile-page {
+      position: absolute;
+      inset: 0;
+      background: #F5F5F5;
+      z-index: 30;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .profile-page.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 0.25s ease, visibility 0s linear 0s;
+    }
+    .profile-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: calc(var(--safe-bottom) + 70px);
+    }
+    .profile-scroll::-webkit-scrollbar { display: none; }
+    .profile-header {
+      background: linear-gradient(135deg, #FFE4E8 0%, #FFF0F3 50%, #FFF5F7 100%);
+      border-radius: 0 0 24px 24px;
+      padding: calc(var(--safe-top) + 8px) 16px 20px;
+      position: relative;
+    }
+    .profile-header-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .profile-header-actions .icon-btn {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.6);
+      border: none;
+      color: var(--text);
+    }
+    .profile-header-actions .icon-btn svg { width: 18px; height: 18px; }
+    .profile-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .profile-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF9A9E, #FECFEF);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 14px; font-weight: 700;
+      border: 2px solid #fff;
+      flex-shrink: 0;
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name {
+      font-size: 18px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .profile-name svg { width: 16px; height: 16px; color: var(--text-secondary); }
+    .profile-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .profile-tag {
+      font-size: 11px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .profile-stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .profile-stat-card {
+      flex: 1;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .profile-stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #FFF0F3;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--red);
+    }
+    .profile-stat-icon svg { width: 20px; height: 20px; }
+    .profile-stat-num { font-size: 18px; font-weight: 700; color: var(--text); }
+    .profile-stat-label { font-size: 12px; color: var(--text-secondary); }
+    .profile-section {
+      background: #fff;
+      border-radius: 16px;
+      margin: 12px 12px 0;
+      padding: 16px;
+    }
+    .profile-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .profile-section-more {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .profile-section-more svg { width: 12px; height: 12px; }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .profile-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px 10px;
+    }
+    .profile-grid-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .profile-grid-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: #F5F5F5;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text);
+    }
+    .profile-grid-icon svg { width: 22px; height: 22px; }
+    .profile-grid-icon.highlight { background: #FFF0F3; color: var(--red); }
+    .profile-grid-label { font-size: 12px; color: var(--text); }
+    .profile-banner {
+      margin: 12px 12px 0;
+      height: 90px;
+      border-radius: 16px;
+      background: linear-gradient(90deg, #D32F2F 0%, #B71C1C 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFD54F;
+      font-size: 18px;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      overflow: hidden;
+      position: relative;
+    }
+    .profile-banner::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 50%, rgba(255,255,255,0.15) 0%, transparent 50%);
+    }
+    .profile-logout {
+      display: block;
+      width: calc(100% - 24px);
+      margin: 16px 12px 0;
+      height: 46px;
+      border-radius: 23px;
+      border: none;
+      background: linear-gradient(90deg, #FF6B6B, #EE5253);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .profile-tabbar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--safe-bottom) + 56px);
+      background: #fff;
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding-top: 6px;
+      z-index: 35;
+    }
+    .profile-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0;
+      min-width: 56px;
+    }
+    .profile-tab.active { color: var(--red); }
+    .profile-tab svg { width: 24px; height: 24px; }
+    .profile-tab .cart-badge {
+      position: absolute;
+      top: 2px;
+      right: 26px;
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ===== Anchor data module ===== */
+    .anchor-data-page {
+      position: absolute;
+      inset: 0;
+      background: #F5F5F5;
+      z-index: 50;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .anchor-data-page.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 0.25s ease, visibility 0s linear 0s;
+    }
+    .anchor-page {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .anchor-page.show {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 1;
+    }
+    .anchor-header {
+      height: calc(var(--safe-top) + 44px);
+      background: #F5F5F5;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 12px 10px;
+      position: relative;
+      z-index: 10;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .anchor-back {
+      position: absolute;
+      left: 12px;
+      bottom: 10px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .anchor-back svg { width: 22px; height: 22px; }
+    .anchor-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .anchor-filter {
+      position: absolute;
+      right: 12px;
+      bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      color: var(--text);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .anchor-filter svg { width: 12px; height: 12px; }
+    .anchor-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: calc(var(--safe-bottom) + 12px);
+    }
+    .anchor-scroll::-webkit-scrollbar { display: none; }
+
+    /* Anchor home */
+    .anchor-summary {
+      background: #fff;
+      padding: 24px 16px 20px;
+      text-align: center;
+    }
+    .anchor-total-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .anchor-total-amount {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .anchor-cards-row {
+      display: flex;
+      background: #fff;
+      padding: 0 12px 16px;
+      gap: 10px;
+    }
+    .anchor-cards-row.secondary {
+      padding: 12px;
+      gap: 8px;
+      background: #F5F5F5;
+    }
+    .anchor-card {
+      flex: 1;
+      background: #F5F5F5;
+      border-radius: 14px;
+      padding: 16px 8px;
+      text-align: center;
+    }
+    .anchor-cards-row.secondary .anchor-card {
+      background: #fff;
+      padding: 14px 6px;
+    }
+    .anchor-card.clickable { cursor: pointer; }
+    .anchor-card.clickable:active { opacity: 0.8; }
+    .anchor-card-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .anchor-card-value .unit {
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+    .anchor-card-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+    .anchor-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      padding: 16px 12px 10px;
+      background: #F5F5F5;
+    }
+    .anchor-live-list {
+      background: #F5F5F5;
+      padding: 0 12px 12px;
+    }
+    .anchor-live-item {
+      background: #fff;
+      border-radius: 14px;
+      padding: 14px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .anchor-live-item:active { opacity: 0.85; }
+    .anchor-live-info { flex: 1; min-width: 0; }
+    .anchor-live-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .anchor-live-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .anchor-live-meta .blue { color: var(--primary); }
+    .anchor-live-arrow {
+      color: var(--text-secondary);
+      margin-left: 8px;
+    }
+    .anchor-live-arrow svg { width: 18px; height: 18px; }
+
+    /* Anchor detail (sessions / people) */
+    .anchor-detail-summary {
+      background: #fff;
+      padding: 20px 16px 16px;
+      display: flex;
+      gap: 10px;
+    }
+    .anchor-detail-summary.two .anchor-card { flex: 1; }
+    .anchor-detail-summary.three .anchor-card { flex: 1; }
+
+    /* Anchor viewers page */
+    .anchor-viewers-header {
+      background: #fff;
+      padding: 16px;
+    }
+    .anchor-viewers-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      padding-bottom: 12px;
+    }
+    .anchor-viewers-stats {
+      display: flex;
+      gap: 10px;
+      padding-bottom: 12px;
+    }
+    .anchor-sort-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding-top: 10px;
+      border-top: 0.5px solid var(--border);
+      cursor: pointer;
+    }
+    .anchor-sort-bar svg { width: 12px; height: 12px; }
+    .anchor-table {
+      background: #fff;
+      margin-top: 10px;
+    }
+    .anchor-table-header {
+      display: grid;
+      grid-template-columns: 1.2fr 1.4fr 0.9fr;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-bottom: 0.5px solid var(--border);
+      background: #F5F5F5;
+    }
+    .anchor-table-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1.4fr 0.9fr;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .anchor-table-row:last-child { border-bottom: none; }
+
+    /* Filter picker */
+    .filter-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .filter-overlay.show { opacity: 1; pointer-events: auto; }
+    .filter-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 16px;
+      transform: translateY(100%);
+      transition: transform 0.3s ease, visibility 0s linear 0.3s;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 101;
+    }
+    .filter-overlay.show + .filter-sheet,
+    .filter-sheet.show {
+      transform: translateY(0);
+      visibility: visible;
+      pointer-events: auto;
+      transition: transform 0.3s ease, visibility 0s linear 0s;
+    }
+    .filter-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .filter-option {
+      width: 100%;
+      padding: 14px 16px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--text);
+      background: #F5F5F5;
+      border: none;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .filter-option.active { background: var(--primary); color: #fff; }
+    .filter-option:last-child { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="screen">
+      <!-- Camera preview -->
+      <div class="camera-preview"></div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span>14:45</span>
+        <div class="status-icons">
+          <!-- signal -->
+          <svg viewBox="0 0 18 14" fill="none"><rect x="12" y="2" width="2.5" height="10" rx="1" fill="currentColor"/><rect x="7" y="5" width="2.5" height="7" rx="1" fill="currentColor" opacity="0.7"/><rect x="2" y="8" width="2.5" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+          <!-- wifi -->
+          <svg viewBox="0 0 18 14" fill="none"><path d="M9 11.5 2 5c1.5-1.5 4-2.5 7-2.5s5.5 1 7 2.5L9 11.5z" stroke="currentColor" stroke-width="1.5"/></svg>
+          <!-- battery -->
+          <svg viewBox="0 0 24 12" fill="none"><rect x="1" y="1.5" width="18" height="9" rx="2" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="3.5" width="12" height="5" rx="1" fill="currentColor"/><rect x="20" y="4.5" width="2" height="3" rx="0.5" fill="currentColor"/></svg>
+        </div>
+      </div>
+
+      <!-- Live badge -->
+      <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+      <div class="live-time">00:04:29</div>
+
+      <!-- Host info -->
+      <div class="host-info">
+        <div class="host-avatar">主播</div>
+        <div>
+          <div class="host-name">大哥</div>
+          <div class="host-views">3人看过</div>
+        </div>
+      </div>
+
+      <!-- Top actions -->
+      <div class="top-actions">
+        <div class="icon-btn" id="btnData" title="直播间数据" onclick="toggleDataPanel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16v-4"/><path d="M11 16V8"/><path d="M15 16v-6"/><path d="M19 16v-2"/></svg>
+        </div>
+        <div class="icon-btn" title="关闭直播" onclick="openCloseLiveModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+        </div>
+      </div>
+
+      <!-- Data panel -->
+      <div class="data-panel" id="dataPanel">
+        <div class="data-header">
+          <div class="data-title">直播间数据</div>
+          <div class="data-actions">
+            <button class="data-action refresh" onclick="refreshData()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+              手动刷新
+            </button>
+            <button class="data-action" onclick="toggleDataPanel()">收起</button>
+          </div>
+        </div>
+        <div class="data-grid">
+          <div class="data-item"><span class="data-label">实时人数</span><span class="data-value" data-key="online">14</span></div>
+          <div class="data-item"><span class="data-label">下单金额</span><span class="data-value" data-key="orderAmount">100003</span></div>
+          <div class="data-item"><span class="data-label">观看人次</span><span class="data-value" data-key="totalView">198</span></div>
+          <div class="data-item"><span class="data-label">分享次数</span><span class="data-value" data-key="shareTimes">99</span></div>
+          <div class="data-item"><span class="data-label">最高人数</span><span class="data-value" data-key="maxOnline">70</span></div>
+          <div class="data-item"><span class="data-label">分享人数</span><span class="data-value" data-key="shareCount">50</span></div>
+        </div>
+      </div>
+
+      <!-- Bottom toolbar -->
+      <div class="bottom-bar">
+        <button class="tool-btn" onclick="onTool('chat')">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.6-5.8A8.38 8.38 0 0 1 3.5 11.5a8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>
+          </div>
+          <span class="tool-label">聊天框</span>
+        </button>
+        <button class="tool-btn" id="btnActivity" onclick="openActivity()">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="3"/></svg>
+          </div>
+          <span class="tool-label">直播活动</span>
+        </button>
+        <button class="tool-btn" onclick="onTool('coHost')">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3 3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Z"/><path d="M19 10v2a7 7 0 0 1-7 7 7 7 0 0 1-7-7v-2"/></svg>
+          </div>
+          <span class="tool-label">连麦主播</span>
+        </button>
+        <button class="tool-btn" onclick="onTool('coUser')">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="tool-label">连麦用户</span>
+        </button>
+        <button class="tool-btn" onclick="onTool('more')">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/><circle cx="5" cy="12" r="1.5" fill="currentColor"/></svg>
+          </div>
+          <span class="tool-label">更多</span>
+        </button>
+      </div>
+
+      <!-- Activity sheet -->
+      <div class="activity-overlay" id="activityOverlay" onclick="closeActivity()"></div>
+      <div class="activity-sheet" id="activitySheet">
+        <div class="activity-header">
+          <div class="activity-tabs">
+            <button class="activity-tab active" data-tab="product" onclick="switchActivityTab('product')">商品</button>
+            <button class="activity-tab" data-tab="bag" onclick="switchActivityTab('bag')">福袋</button>
+            <button class="activity-tab" data-tab="coupon" onclick="switchActivityTab('coupon')">优惠券</button>
+          </div>
+          <div class="activity-close" onclick="closeActivity()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </div>
+        </div>
+        <div class="activity-body" id="activityBody"><!-- JS renders --></div>
+      </div>
+
+      <!-- Close live modal -->
+      <div class="modal-overlay" id="closeLiveModal" onclick="closeCloseLiveModalOnOverlay(event)">
+        <div class="modal-box">
+          <div class="modal-title">是否关闭直播</div>
+          <div class="modal-actions">
+            <button class="modal-btn modal-cancel" onclick="closeCloseLiveModal()">取消</button>
+            <button class="modal-btn modal-ok" onclick="confirmCloseLive()">确定</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comment edit modal -->
+      <div class="modal-overlay" id="commentModal" onclick="closeCommentModalOnOverlay(event)">
+        <div class="modal-box">
+          <div class="modal-title">编辑评论内容</div>
+          <textarea class="modal-input" id="commentInput" placeholder="请输入评论内容"></textarea>
+          <div class="modal-actions">
+            <button class="modal-btn modal-cancel" onclick="closeCommentModal()">取消</button>
+            <button class="modal-btn modal-ok" onclick="saveComment()">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile page -->
+      <div class="profile-page" id="profilePage">
+        <div class="profile-scroll">
+          <div class="profile-header">
+            <div class="profile-header-actions">
+              <button class="icon-btn" onclick="onProfileTool('message')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6 12 13 2 6"/></svg>
+              </button>
+              <button class="icon-btn" onclick="onProfileTool('settings')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            </div>
+            <div class="profile-user">
+              <div class="profile-avatar">hsb</div>
+              <div class="profile-info">
+                <div class="profile-name">hsbdnd
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                </div>
+                <div class="profile-meta">
+                  <span class="profile-tag">ID 35779872</span>
+                  <span class="profile-tag">Code: AACS010137</span>
+                </div>
+              </div>
+            </div>
+            <div class="profile-stats">
+              <div class="profile-stat-card">
+                <div class="profile-stat-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                <div>
+                  <div class="profile-stat-num">0</div>
+                  <div class="profile-stat-label">优惠券</div>
+                </div>
+              </div>
+              <div class="profile-stat-card">
+                <div class="profile-stat-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </div>
+                <div>
+                  <div class="profile-stat-num">2</div>
+                  <div class="profile-stat-label">我的想要</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <div class="profile-section-title">
+              我的订单
+              <span class="profile-section-more" onclick="onProfileTool('orders')">全部订单
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+              </span>
+            </div>
+            <div class="profile-grid">
+              <button class="profile-grid-item" onclick="onProfileTool('order_pay')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                <span class="profile-grid-label">待付款</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('order_ship')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="15" height="10" rx="2"/><path d="M17 12h4l-2-3-2 3z"/><circle cx="7" cy="12" r="1" fill="currentColor"/></svg></div>
+                <span class="profile-grid-label">待发货</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('order_receive')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+                <span class="profile-grid-label">待收货</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('order_review')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg></div>
+                <span class="profile-grid-label">待评价</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('order_aftersale')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div>
+                <span class="profile-grid-label">售后</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <div class="profile-section-title">常用功能</div>
+            <div class="profile-grid-4">
+              <button class="profile-grid-item" onclick="onProfileTool('service')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3 3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Z"/><path d="M19 10v2a7 7 0 0 1-7 7 7 7 0 0 1-7-7v-2"/></svg></div>
+                <span class="profile-grid-label">联系客服</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('address')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <span class="profile-grid-label">收货地址</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('qrcode')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+                <span class="profile-grid-label">我的二维码</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('cinema')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2Z"/><path d="M8 7v14"/><path d="M16 7v14"/><path d="M4 12h16"/></svg></div>
+                <span class="profile-grid-label">院线</span>
+              </button>
+              <button class="profile-grid-item" onclick="onProfileTool('community')">
+                <div class="profile-grid-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <span class="profile-grid-label">社区</span>
+              </button>
+              <button class="profile-grid-item" onclick="goToLiveRoom()">
+                <div class="profile-grid-icon highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+                <span class="profile-grid-label">我的直播间</span>
+              </button>
+              <button class="profile-grid-item" onclick="goToAnchorData()">
+                <div class="profile-grid-icon highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16v-4"/><path d="M11 16V8"/><path d="M15 16v-6"/><path d="M19 16v-2"/></svg></div>
+                <span class="profile-grid-label">主播数据</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="profile-banner" onclick="onProfileTool('banner')">黄金抗皱面霜【重要公告】</div>
+
+          <button class="profile-logout" onclick="onProfileTool('logout')">退出登录</button>
+        </div>
+
+        <div class="profile-tabbar">
+          <button class="profile-tab" onclick="onProfileTool('tab_home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            首页
+          </button>
+          <button class="profile-tab" onclick="onProfileTool('tab_mall')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            商城/分类
+          </button>
+          <button class="profile-tab" onclick="onProfileTool('tab_rank')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            榜单
+          </button>
+          <button class="profile-tab" onclick="onProfileTool('tab_cart')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            购物车
+            <span class="cart-badge">7</span>
+          </button>
+          <button class="profile-tab active" onclick="onProfileTool('tab_mine')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            我的
+          </button>
+        </div>
+      </div>
+
+      <!-- Anchor data module -->
+      <div class="anchor-data-page" id="anchorDataPage">
+        <!-- Home -->
+        <div class="anchor-page show" id="anchorHome">
+          <div class="anchor-header">
+            <button class="anchor-back" onclick="backFromAnchor()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="anchor-title">主播数据</div>
+          </div>
+          <div class="anchor-scroll">
+            <div class="anchor-summary">
+              <div class="anchor-total-label">直播下单总金额</div>
+              <div class="anchor-total-amount">¥599999</div>
+            </div>
+            <div class="anchor-cards-row">
+              <div class="anchor-card clickable" onclick="goAnchorSessions()">
+                <div class="anchor-card-value">98<span class="unit">场</span></div>
+                <div class="anchor-card-label">总场次</div>
+              </div>
+              <div class="anchor-card clickable" onclick="goAnchorSessions()">
+                <div class="anchor-card-value">9800<span class="unit">h</span></div>
+                <div class="anchor-card-label">总时长</div>
+              </div>
+              <div class="anchor-card">
+                <div class="anchor-card-value">3789<span class="unit">笔</span></div>
+                <div class="anchor-card-label">总订单数</div>
+              </div>
+            </div>
+            <div class="anchor-cards-row secondary">
+              <div class="anchor-card small clickable" onclick="goAnchorPeople()">
+                <div class="anchor-card-value">752</div>
+                <div class="anchor-card-label">总人数</div>
+              </div>
+              <div class="anchor-card small clickable" onclick="goAnchorPeople()">
+                <div class="anchor-card-value">7520</div>
+                <div class="anchor-card-label">总点赞数</div>
+              </div>
+              <div class="anchor-card small clickable" onclick="goAnchorPeople()">
+                <div class="anchor-card-value">520</div>
+                <div class="anchor-card-label">总评论数</div>
+              </div>
+            </div>
+            <div class="anchor-section-title">最近直播</div>
+            <div class="anchor-live-list" id="anchorHomeList"></div>
+          </div>
+        </div>
+
+        <!-- Sessions detail -->
+        <div class="anchor-page" id="anchorSessions">
+          <div class="anchor-header">
+            <button class="anchor-back" onclick="backToAnchorHome()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="anchor-title">主播数据</div>
+            <button class="anchor-filter" onclick="openFilter('sessions')">
+              <span id="sessionsFilterText">全部</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="anchor-scroll">
+            <div class="anchor-detail-summary two" id="sessionsSummary"></div>
+            <div class="anchor-live-list" id="sessionsList"></div>
+          </div>
+        </div>
+
+        <!-- People detail -->
+        <div class="anchor-page" id="anchorPeople">
+          <div class="anchor-header">
+            <button class="anchor-back" onclick="backToAnchorHome()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="anchor-title">主播数据</div>
+            <button class="anchor-filter" onclick="openFilter('people')">
+              <span id="peopleFilterText">全部</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="anchor-scroll">
+            <div class="anchor-detail-summary three" id="peopleSummary"></div>
+            <div class="anchor-live-list" id="peopleList"></div>
+          </div>
+        </div>
+
+        <!-- Viewers detail -->
+        <div class="anchor-page" id="anchorViewers">
+          <div class="anchor-header">
+            <button class="anchor-back" onclick="backToAnchorHome()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="anchor-title" id="viewersTitle">直播间标题</div>
+          </div>
+          <div class="anchor-scroll">
+            <div class="anchor-viewers-header">
+              <div class="anchor-viewers-stats" id="viewersStats"></div>
+              <div class="anchor-sort-bar" onclick="toggleViewerSort()">
+                <span id="viewerSortText">停留时长从高到低</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="anchor-table">
+              <div class="anchor-table-header">
+                <span>用户昵称</span>
+                <span>最后进入时间</span>
+                <span>停留时长</span>
+              </div>
+              <div id="viewersTableBody"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter picker -->
+      <div class="filter-overlay" id="filterOverlay" onclick="closeFilter()"></div>
+      <div class="filter-sheet" id="filterSheet">
+        <div class="filter-title">选择时间范围</div>
+        <div id="filterOptions"></div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <script>
+    // Demo data
+    let products = [
+      { id: 'p1', rank: 1, title: '【TST】TST微电流美容仪', price: 9, origin: 100, img: '美容仪', tag: '推屏讲解中', pushing: true, sub: '面膜' },
+      { id: 'p2', rank: 2, title: '【TST】玲珑美体仪', price: 998, origin: 1538, img: '美体仪', tag: '', pushing: false, sub: '保湿' },
+      { id: 'p3', rank: 3, title: '【补差价】运费补差价 不退款 不发货', price: 1, origin: 4, img: '补差价', tag: '', pushing: false, sub: '全部' }
+    ];
+    let bags = [
+      { id: 'b1', name: '星钻福袋1', type: '星钻福袋', status: '5分钟开奖', people: 10, per: 5, condition: '用户评论', comment: '美丽大女人，有种你就行', pushing: false, category: '星钻福袋' },
+      { id: 'b2', name: '星钻福袋2', type: '拼手气', status: '5分钟开奖', people: 100, max: 10, condition: '用户评论', comment: '美丽大女人，有种你就行', pushing: false, category: '星钻福袋' },
+      { id: 'b3', name: '星钻福袋3', type: '指定', status: '5分钟开奖', people: 100, per: 10, condition: '用户分享', comment: '美丽大女人，有种你就行', pushing: false, category: '星钻福袋' },
+      { id: 'b4', name: '星钻福袋4', type: '拼手气', status: '5分钟开奖', people: 100, max: 10, condition: '一键参与', comment: '美丽大女人，有种你就行', pushing: false, category: '星钻福袋' },
+      { id: 'b5', name: '礼包券福袋1', type: '券福袋', status: '4:59后开奖', people: 10, per: 1, condition: '用户评论', comment: '美丽大女人，有种你就行', pushing: false, category: '券福袋' }
+    ];
+    let coupons = [
+      { id: 'c1', name: '时长礼包券1', type: '时长券', condition: '持续观看10分钟领取', status: '待推屏', pushing: false },
+      { id: 'c2', name: '时长礼包券2', type: '时长券', condition: '持续观看10分钟领取', status: '推屏中', pushing: true },
+      { id: 'c3', name: '时长礼包券3', type: '时长券', condition: '持续观看10分钟领取', status: '已推屏', pushing: false },
+      { id: 'c4', name: '直接领取券1', type: '直领券', condition: '推屏后用户直接可领取', status: '待推屏', pushing: false }
+    ];
+
+    let currentTab = 'product';
+    let currentSub = { product: '全部', bag: '全部', coupon: '全部' };
+    let editingBagId = null;
+
+    const subTabs = {
+      product: ['全部', '面膜', '保湿', 'K皱'],
+      bag: ['全部', '星钻福袋', '券福袋'],
+      coupon: ['全部', '时长券', '直领券']
+    };
+
+    // Anchor data demo data
+    const anchorLives = [
+      { id: 'l1', title: '沐春夏之美，赴女神之约', time: '2026-03-08 19:00:00', viewers: 35, likes: 666, comments: 12, booked: '2026-03-08 19:00:00', actual: '2026-03-08 19:00:00—2026-03-08 21:00:00', duration: 239 },
+      { id: 'l2', title: '沐春夏之美，赴女神之约', time: '2026-03-07 19:00:00', viewers: 28, likes: 520, comments: 8, booked: '2026-03-07 19:00:00', actual: '2026-03-07 19:00:00—2026-03-07 21:00:00', duration: 239 },
+      { id: 'l3', title: '沐春夏之美，赴女神之约', time: '2026-02-28 19:00:00', viewers: 42, likes: 888, comments: 15, booked: '2026-02-28 19:00:00', actual: '2026-02-28 19:00:00—2026-02-28 21:00:00', duration: 239 },
+      { id: 'l4', title: '沐春夏之美，赴女神之约', time: '2026-02-20 19:00:00', viewers: 19, likes: 333, comments: 5, booked: '2026-02-20 19:00:00', actual: '2026-02-20 19:00:00—2026-02-20 21:00:00', duration: 239 },
+      { id: 'l5', title: '沐春夏之美，赴女神之约', time: '2026-01-15 19:00:00', viewers: 51, likes: 999, comments: 22, booked: '2026-01-15 19:00:00', actual: '2026-01-15 19:00:00—2026-01-15 21:00:00', duration: 239 }
+    ];
+    const anchorViewersData = [
+      { nick: '美丽人生A', enter: '2026-03-08 19:01:00', stay: 35 },
+      { nick: '小丽', enter: '2026-03-08 19:05:00', stay: 28 },
+      { nick: '春夏之约', enter: '2026-03-08 19:02:00', stay: 42 },
+      { nick: '女神降临', enter: '2026-03-08 19:10:00', stay: 15 },
+      { nick: '花开富贵', enter: '2026-03-08 19:03:00', stay: 55 },
+      { nick: '岁月静好', enter: '2026-03-08 19:08:00', stay: 22 }
+    ];
+    let currentFilter = { sessions: '全部', people: '全部' };
+    let viewerSortDesc = true;
+    let currentAnchorLive = null;
+    let currentFilterType = null;
+
+    const filterOptions = ['全部', '26年3月', '26年2月', '26年1月'];
+
+    // Data panel
+    function toggleDataPanel() {
+      document.getElementById('dataPanel').classList.toggle('show');
+    }
+    function refreshData() {
+      const values = {
+        online: Math.floor(10 + Math.random() * 100),
+        totalView: Math.floor(50 + Math.random() * 300),
+        maxOnline: Math.floor(20 + Math.random() * 100),
+        orderAmount: Math.floor(5000 + Math.random() * 200000),
+        shareTimes: Math.floor(10 + Math.random() * 200),
+        shareCount: Math.floor(10 + Math.random() * 150)
+      };
+      Object.entries(values).forEach(([k, v]) => {
+        const el = document.querySelector(`[data-key="${k}"]`);
+        if (el) el.textContent = v;
+      });
+      showToast('数据已刷新');
+    }
+
+    // Close live modal
+    function openCloseLiveModal() {
+      document.getElementById('closeLiveModal').classList.add('show');
+    }
+    function closeCloseLiveModal() {
+      document.getElementById('closeLiveModal').classList.remove('show');
+    }
+    function closeCloseLiveModalOnOverlay(e) {
+      if (e.target === document.getElementById('closeLiveModal')) closeCloseLiveModal();
+    }
+    function confirmCloseLive() {
+      closeCloseLiveModal();
+      document.getElementById('dataPanel').classList.remove('show');
+      showToast('直播已关闭');
+      setTimeout(() => {
+        document.getElementById('profilePage').classList.add('show');
+        document.querySelector('.bottom-bar').classList.add('hidden');
+      }, 500);
+    }
+    function goToLiveRoom() {
+      document.getElementById('profilePage').classList.remove('show');
+      document.querySelector('.bottom-bar').classList.remove('hidden');
+    }
+    function onProfileTool(name) {
+      const map = {
+        message: '消息', settings: '设置', orders: '全部订单',
+        order_pay: '待付款', order_ship: '待发货', order_receive: '待收货', order_review: '待评价', order_aftersale: '售后',
+        service: '联系客服', address: '收货地址', qrcode: '我的二维码', cinema: '院线', community: '社区',
+        banner: '黄金抗皱面霜公告',
+        logout: '退出登录',
+        tab_home: '首页', tab_mall: '商城/分类', tab_rank: '榜单', tab_cart: '购物车', tab_mine: '我的'
+      };
+      showToast((map[name] || name) + '（后续实现）');
+    }
+
+    // Toolbar
+    function onTool(name) {
+      const map = { chat: '聊天框', coHost: '连麦主播', coUser: '连麦用户', more: '更多' };
+      showToast(map[name] + '（后续批次实现）');
+    }
+
+    // Activity sheet
+    function openActivity() {
+      document.getElementById('btnActivity').classList.add('active');
+      document.getElementById('activityOverlay').classList.add('show');
+      document.getElementById('activitySheet').classList.add('show');
+      renderActivityBody();
+    }
+    function closeActivity() {
+      document.getElementById('btnActivity').classList.remove('active');
+      document.getElementById('activityOverlay').classList.remove('show');
+      document.getElementById('activitySheet').classList.remove('show');
+    }
+    function switchActivityTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.activity-tab').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.activity-tab[data-tab="${tab}"]`).classList.add('active');
+      renderActivityBody();
+    }
+    function renderSubTabs() {
+      const tabs = subTabs[currentTab];
+      return `<div class="sub-tabs">${tabs.map(t =>
+        `<button class="sub-tab ${currentSub[currentTab] === t ? 'active' : ''}" onclick="switchSubTab('${t}')">${t}</button>`
+      ).join('')}</div>`;
+    }
+    function switchSubTab(t) {
+      currentSub[currentTab] = t;
+      renderActivityBody();
+    }
+    function renderActivityBody() {
+      const body = document.getElementById('activityBody');
+      let html = renderSubTabs();
+      if (currentTab === 'product') html += renderProducts();
+      else if (currentTab === 'bag') html += renderBags();
+      else html += renderCoupons();
+      body.innerHTML = html;
+    }
+
+    // Products
+    function renderProducts() {
+      const list = currentSub.product === '全部' ? products : products.filter(p => p.sub === currentSub.product);
+      if (list.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">暂无该分类商品</div>';
+      return list.map(p => `
+        <div class="product-card">
+          <div class="product-main">
+            <div class="product-rank">${p.rank}</div>
+            <div class="product-img">${p.img}</div>
+            <div class="product-info">
+              ${p.tag ? `<div class="product-tag">${p.tag}</div>` : ''}
+              <div class="product-title">${p.title}</div>
+              <div class="product-price-row">
+                <span class="product-price">¥${p.price}</span>
+                <span class="product-origin">¥${p.origin}</span>
+              </div>
+            </div>
+          </div>
+          <div class="product-actions">
+            <button class="btn-config" onclick="onConfig('${p.id}')">+配置</button>
+            <button class="btn-push ${p.pushing ? 'active' : ''}" onclick="togglePushProduct('${p.id}')">${p.pushing ? '取消推屏' : '推屏'}</button>
+          </div>
+          <div class="product-sort">
+            <button class="sort-btn" onclick="sortProduct('${p.id}', 'top')">置顶</button>
+            <button class="sort-btn" onclick="sortProduct('${p.id}', 'bottom')">置底</button>
+            <button class="sort-btn" onclick="sortProduct('${p.id}', 'up')">上移</button>
+            <button class="sort-btn" onclick="sortProduct('${p.id}', 'down')">下移</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    function onConfig(id) { showToast('商品配置弹窗（本次不做）'); }
+    function togglePushProduct(id) {
+      const p = products.find(x => x.id === id);
+      p.pushing = !p.pushing;
+      p.tag = p.pushing ? '推屏讲解中' : '';
+      renderActivityBody();
+      showToast(p.pushing ? '推屏成功，持续时间：10秒' : '已取消推屏');
+    }
+    function sortProduct(id, action) {
+      const idx = products.findIndex(x => x.id === id);
+      if (idx < 0) return;
+      let newIdx = idx;
+      if (action === 'top') newIdx = 0;
+      else if (action === 'bottom') newIdx = products.length - 1;
+      else if (action === 'up') newIdx = Math.max(0, idx - 1);
+      else if (action === 'down') newIdx = Math.min(products.length - 1, idx + 1);
+      if (newIdx === idx) return;
+      const item = products.splice(idx, 1)[0];
+      products.splice(newIdx, 0, item);
+      products.forEach((p, i) => p.rank = i + 1);
+      renderActivityBody();
+    }
+
+    // Bags
+    function renderBags() {
+      const list = currentSub.bag === '全部' ? bags : bags.filter(b => b.category === currentSub.bag);
+      if (list.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">暂无该分类福袋</div>';
+      return list.map(b => `
+        <div class="bag-card">
+          <div class="bag-header">
+            <div class="bag-left">
+              <div class="bag-img">${b.type === '券福袋' ? '券logo' : '星钻logo'}</div>
+              <div class="bag-info">
+                <div class="bag-name">${b.name}</div>
+                <div class="bag-tags">
+                  <span class="bag-tag type">${b.type}</span>
+                  ${b.pushing ? '<span class="bag-tag status">推屏中</span>' : ''}
+                </div>
+              </div>
+            </div>
+            <div class="bag-status">${b.status}</div>
+          </div>
+          <div class="bag-detail">
+            ${b.per !== undefined ? `<div>开奖人数：${b.people}　每人可得：${b.per}</div>` : `<div>开奖人数：${b.people}　最大可得：${b.max}</div>`}
+            <div>参与条件：${b.condition}</div>
+          </div>
+          <div class="bag-comment">
+            <span>评论内容：${b.comment}</span>
+            <span class="edit" onclick="openCommentModal('${b.id}')">修改</span>
+          </div>
+          <div class="bag-actions">
+            <button class="bag-btn ${b.pushing ? 'orange' : ''}" onclick="togglePushBag('${b.id}')">${b.pushing ? '取消推屏' : '推屏'}</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    function togglePushBag(id) {
+      const b = bags.find(x => x.id === id);
+      b.pushing = !b.pushing;
+      renderActivityBody();
+      showToast(b.pushing ? '推屏成功！' : '已取消推屏');
+    }
+
+    // Coupons
+    function renderCoupons() {
+      const list = currentSub.coupon === '全部' ? coupons : coupons.filter(c => c.type === currentSub.coupon);
+      if (list.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">暂无该分类优惠券</div>';
+      return list.map(c => `
+        <div class="coupon-card">
+          <div class="coupon-img">券logo</div>
+          <div class="coupon-info">
+            <div class="coupon-name">${c.name}</div>
+            <div class="coupon-condition">${c.condition}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            ${c.pushing ? '<div class="coupon-pushing"><div class="spin"></div>推屏中</div>' : `<div class="coupon-status">${c.status}</div>`}
+            <button class="coupon-push ${c.pushing ? 'active' : ''}" onclick="togglePushCoupon('${c.id}')">${c.pushing ? '取消推屏' : '推屏'}</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    function togglePushCoupon(id) {
+      const c = coupons.find(x => x.id === id);
+      c.pushing = !c.pushing;
+      c.status = c.pushing ? '推屏中' : '待推屏';
+      renderActivityBody();
+      showToast(c.pushing ? '推屏成功！' : '已取消推屏');
+    }
+
+    // Comment modal
+    function openCommentModal(id) {
+      editingBagId = id;
+      const b = bags.find(x => x.id === id);
+      document.getElementById('commentInput').value = b.comment;
+      document.getElementById('commentModal').classList.add('show');
+    }
+    function closeCommentModal() {
+      document.getElementById('commentModal').classList.remove('show');
+      editingBagId = null;
+    }
+    function closeCommentModalOnOverlay(e) {
+      if (e.target === document.getElementById('commentModal')) closeCommentModal();
+    }
+    function saveComment() {
+      if (!editingBagId) return;
+      const b = bags.find(x => x.id === editingBagId);
+      b.comment = document.getElementById('commentInput').value;
+      renderActivityBody();
+      closeCommentModal();
+      showToast('评论内容已保存');
+    }
+
+    // ===== Anchor data navigation =====
+    function goToAnchorData() {
+      document.getElementById('dataPanel').classList.remove('show');
+      document.getElementById('anchorDataPage').classList.add('show');
+      showAnchorPage('anchorHome');
+      renderAnchorHome();
+    }
+    function backFromAnchor() {
+      document.getElementById('anchorDataPage').classList.remove('show');
+    }
+    function backToAnchorHome() {
+      showAnchorPage('anchorHome');
+    }
+    function showAnchorPage(id) {
+      document.querySelectorAll('.anchor-page').forEach(p => p.classList.remove('show'));
+      document.getElementById(id).classList.add('show');
+    }
+
+    function renderAnchorHome() {
+      const listHtml = anchorLives.map(live => `
+        <div class="anchor-live-item" onclick="goAnchorViewers('${live.id}')">
+          <div class="anchor-live-info">
+            <div class="anchor-live-title">${live.title}</div>
+            <div class="anchor-live-meta">
+              直播时间：${live.time}<br/>
+              观看人数：<span class="blue">${live.viewers}</span><br/>
+              点赞数：${live.likes}<br/>
+              评论数：${live.comments}
+            </div>
+          </div>
+          <div class="anchor-live-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('anchorHomeList').innerHTML = listHtml;
+    }
+
+    function filterLives(filter) {
+      if (filter === '全部') return anchorLives;
+      if (filter === '26年3月') return anchorLives.filter(l => l.time.startsWith('2026-03'));
+      if (filter === '26年2月') return anchorLives.filter(l => l.time.startsWith('2026-02'));
+      if (filter === '26年1月') return anchorLives.filter(l => l.time.startsWith('2026-01'));
+      return anchorLives;
+    }
+
+    function goAnchorSessions() {
+      showAnchorPage('anchorSessions');
+      renderSessionsDetail();
+    }
+    function renderSessionsDetail() {
+      const list = filterLives(currentFilter.sessions);
+      const totalSession = list.length;
+      const totalDuration = list.reduce((sum, l) => sum + l.duration, 0);
+      document.getElementById('sessionsSummary').innerHTML = `
+        <div class="anchor-card"><div class="anchor-card-value">${totalSession}<span class="unit">场</span></div><div class="anchor-card-label">总场次</div></div>
+        <div class="anchor-card"><div class="anchor-card-value">${totalDuration}<span class="unit">h</span></div><div class="anchor-card-label">总时长</div></div>
+      `;
+      document.getElementById('sessionsList').innerHTML = list.map(live => `
+        <div class="anchor-live-item">
+          <div class="anchor-live-info">
+            <div class="anchor-live-title">${live.title}</div>
+            <div class="anchor-live-meta">
+              预约时间：${live.booked}<br/>
+              实际时间：${live.actual}<br/>
+              直播时长：${live.duration}分钟
+            </div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('sessionsFilterText').textContent = currentFilter.sessions;
+    }
+
+    function goAnchorPeople() {
+      showAnchorPage('anchorPeople');
+      renderPeopleDetail();
+    }
+    function renderPeopleDetail() {
+      const list = filterLives(currentFilter.people);
+      const totalPeople = list.reduce((sum, l) => sum + l.viewers, 0);
+      const totalLikes = list.reduce((sum, l) => sum + l.likes, 0);
+      const totalComments = list.reduce((sum, l) => sum + l.comments, 0);
+      document.getElementById('peopleSummary').innerHTML = `
+        <div class="anchor-card"><div class="anchor-card-value">${totalPeople}</div><div class="anchor-card-label">总人数</div></div>
+        <div class="anchor-card"><div class="anchor-card-value">${totalLikes}</div><div class="anchor-card-label">总点赞数</div></div>
+        <div class="anchor-card"><div class="anchor-card-value">${totalComments}</div><div class="anchor-card-label">总评论数</div></div>
+      `;
+      document.getElementById('peopleList').innerHTML = list.map(live => `
+        <div class="anchor-live-item">
+          <div class="anchor-live-info">
+            <div class="anchor-live-title">${live.title}</div>
+            <div class="anchor-live-meta">
+              直播时间：${live.time}<br/>
+              观看人数：<span class="blue">${live.viewers}</span><br/>
+              点赞数：${live.likes}<br/>
+              评论数：${live.comments}
+            </div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('peopleFilterText').textContent = currentFilter.people;
+    }
+
+    function goAnchorViewers(liveId) {
+      currentAnchorLive = anchorLives.find(l => l.id === liveId);
+      showAnchorPage('anchorViewers');
+      renderViewers();
+    }
+    function renderViewers() {
+      const live = currentAnchorLive;
+      document.getElementById('viewersTitle').textContent = live.title;
+      document.getElementById('viewersStats').innerHTML = `
+        <div class="anchor-card"><div class="anchor-card-value">${live.viewers}</div><div class="anchor-card-label">观看人数</div></div>
+        <div class="anchor-card"><div class="anchor-card-value">${live.likes}</div><div class="anchor-card-label">点赞数</div></div>
+        <div class="anchor-card"><div class="anchor-card-value">${live.comments}</div><div class="anchor-card-label">评论数</div></div>
+      `;
+      document.getElementById('viewerSortText').textContent = viewerSortDesc ? '停留时长从高到低' : '停留时长从低到高';
+      const sorted = [...anchorViewersData].sort((a, b) => viewerSortDesc ? b.stay - a.stay : a.stay - b.stay);
+      document.getElementById('viewersTableBody').innerHTML = sorted.map(v => `
+        <div class="anchor-table-row">
+          <span>${v.nick}</span>
+          <span>${v.enter}</span>
+          <span>${v.stay}min</span>
+        </div>
+      `).join('');
+    }
+    function toggleViewerSort() {
+      viewerSortDesc = !viewerSortDesc;
+      renderViewers();
+    }
+
+    // Filter picker
+    function openFilter(type) {
+      currentFilterType = type;
+      const current = currentFilter[type];
+      document.getElementById('filterOptions').innerHTML = filterOptions.map(opt =>
+        `<button class="filter-option ${opt === current ? 'active' : ''}" onclick="selectFilter('${opt}')">${opt}</button>`
+      ).join('');
+      document.getElementById('filterOverlay').classList.add('show');
+      document.getElementById('filterSheet').classList.add('show');
+    }
+    function closeFilter() {
+      document.getElementById('filterOverlay').classList.remove('show');
+      document.getElementById('filterSheet').classList.remove('show');
+      currentFilterType = null;
+    }
+    function selectFilter(opt) {
+      if (currentFilterType) {
+        currentFilter[currentFilterType] = opt;
+        if (currentFilterType === 'sessions') renderSessionsDetail();
+        if (currentFilterType === 'people') renderPeopleDetail();
+      }
+      closeFilter();
+    }
+
+    // Toast
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1600);
+    }
+
+    // Init
+    renderActivityBody();
+    renderAnchorHome();
+  </script>
+</body>
+</html>
